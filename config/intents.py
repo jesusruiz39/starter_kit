@@ -12,6 +12,9 @@ EJERCICIO 1: implementa `classify_intent`. No modifiques `INTENTS`.
 
 from __future__ import annotations
 
+import re
+import unicodedata
+
 # ---------------------------------------------------------------------------
 # Catálogo. NO MODIFICAR.
 # Los patrones ya están normalizados: minúsculas, sin acentos, palabras
@@ -63,6 +66,17 @@ MIN_LENGTH = 3
 # cobertura del asistente. Ese número es el que le importa a producto.
 UNKNOWN = "desconocido"
 
+def normalize_text(text: str) -> str:
+    """Normaliza texto: elimina acentos/diacríticos, pasa a minúsculas, reemplaza caracteres no alfanuméricos por espacios y colapsa espacios múltiples.
+    """
+    # Descompone caracteres con tildes/acentos y elimina marcas diacríticas
+    nfkd = unicodedata.normalize("NFKD", text)
+    without_accents = "".join(c for c in nfkd if not unicodedata.combining(c))
+    lowered = without_accents.lower()
+    # Sustituye cualquier caracter no alfanumérico por espacio y colapsa
+    cleaned = re.sub(r"[^\w\s]", " ", lowered)
+    return " ".join(cleaned.split())
+
 
 def classify_intent(message: str) -> str:
     """Devuelve la intención de un mensaje del usuario.
@@ -90,7 +104,39 @@ def classify_intent(message: str) -> str:
     Returns:
         Una de las claves de `INTENTS`, o `UNKNOWN`.
     """
-    raise NotImplementedError("EJERCICIO 1")
+    if not message or not isinstance(message, str):
+        return UNKNOWN
+
+    # Regla 3: Ignorar líneas citadas (las que comienzan con '>')
+    lines = [
+        line.strip()
+        for line in message.splitlines()
+        if not line.strip().startswith(">")
+    ]
+    raw_unquoted = " ".join(lines)
+
+    # Regla 1: Normalización centralizada
+    normalized_message = normalize_text(raw_unquoted)
+
+    # Regla 4 y 6: Longitud mínima
+    if len(normalized_message) < MIN_LENGTH:
+        return UNKNOWN
+
+    # Regla 2: Seleccionar la intención con el patrón coincidente más largo
+    best_intent = UNKNOWN
+    best_pattern_len = -1
+
+    for intent, data in INTENTS.items():
+        for pattern in data.get("patterns", []):
+            norm_pattern = normalize_text(pattern)
+            # Verificación de subsecuencia de palabras/patrón completo
+            if norm_pattern in normalized_message:
+                pattern_len = len(norm_pattern)
+                if pattern_len > best_pattern_len:
+                    best_pattern_len = pattern_len
+                    best_intent = intent
+
+    return best_intent
 
 
 def specialist_for(intent: str) -> str | None:
