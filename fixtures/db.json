@@ -1,0 +1,111 @@
+{
+  "intents": {
+    "facturacion": {
+      "label": "Facturación",
+      "specialist": "billing_agent",
+      "active": true
+    },
+    "soporte_tecnico": {
+      "label": "Soporte técnico",
+      "specialist": "support_agent",
+      "active": true
+    },
+    "cuenta": {
+      "label": "Cuenta y accesos",
+      "specialist": "account_agent",
+      "active": true
+    },
+    "ventas": {
+      "label": "Ventas",
+      "specialist": "sales_agent",
+      "active": false
+    }
+  },
+  "workspaces": {
+    "acme": {
+      "name": "Acme Corp",
+      "plan": "pro"
+    },
+    "globex": {
+      "name": "Globex",
+      "plan": "enterprise"
+    },
+    "initech": {
+      "name": "Initech",
+      "plan": "free"
+    }
+  },
+  "sources": {
+    "src-1": {
+      "titulo": "Guía de planes y garantías",
+      "texto": "El plan Pro incluye una garantía de devolución de 15 días naturales a partir de la fecha de contratación. Para solicitar la devolución basta con escribir a soporte desde el correo de la cuenta. El plan Básico no incluye garantía de devolución. Los cambios de plan a mitad de ciclo se prorratean sobre los días restantes del periodo facturado."
+    },
+    "src-2": {
+      "titulo": "Manual de administración",
+      "texto": "Para agregar un usuario nuevo, ve a Configuración, luego a Equipo, y selecciona Invitar. La invitación caduca a los 7 días y puede reenviarse desde la misma pantalla. Solo los usuarios con rol de Administrador pueden invitar o eliminar miembros del equipo. Al eliminar a un usuario, sus documentos permanecen en el workspace y se reasignan al administrador."
+    },
+    "src-3": {
+      "titulo": "Facturación y cobros",
+      "texto": "La facturación es mensual y se cobra el mismo día del mes en que se contrató el servicio. Si una tarjeta es rechazada, el sistema reintenta el cobro a los 3 y a los 7 días antes de suspender la cuenta. Un cargo duplicado se reembolsa dentro de los 10 días hábiles siguientes al reporte. Las facturas se descargan desde Configuración, en la sección Facturación."
+    },
+    "src-4": {
+      "titulo": "Accesos y contraseñas",
+      "texto": "Para restablecer la contraseña, usa la opción de recuperación en la pantalla de inicio de sesión. El enlace de recuperación es válido durante 60 minutos. Tras cinco intentos fallidos de inicio de sesión, la cuenta se bloquea durante 15 minutos. El cambio de correo electrónico de la cuenta requiere confirmación desde la dirección anterior."
+    },
+    "src-5": {
+      "titulo": "Límites del servicio",
+      "texto": "Cada workspace admite hasta 500 documentos y 2 GB de almacenamiento en el plan Pro. Los formatos aceptados son PDF, DOCX y XLSX, con un máximo de 40 MB por archivo. Superado el límite, los documentos nuevos se rechazan y se notifica al administrador."
+    },
+    "src-6": {
+      "titulo": "Soporte y tiempos de respuesta",
+      "texto": "El horario de soporte es de lunes a viernes de 9:00 a 18:00, hora del centro de México. El tiempo de primera respuesta objetivo es de 4 horas hábiles en el plan Pro. Las incidencias que dejan el servicio inaccesible se atienden como prioridad alta, sin importar el plan."
+    }
+  },
+  "answers": {
+    "a-1": {
+      "workspace_id": "acme",
+      "pregunta": "¿Cuántos días de garantía tiene el plan Pro?",
+      "respuesta": "El plan Pro tiene 15 días de garantía de devolución.",
+      "cita": "El plan Pro incluye una garantía de devolución de 15 días naturales a partir de la fecha de contratación.",
+      "source_id": "src-1",
+      "chunk": 3,
+      "similitud": 0.91
+    },
+    "a-2": {
+      "workspace_id": "acme",
+      "pregunta": "¿Puedo cambiar de plan a mitad de mes?",
+      "respuesta": "Sí, puedes cambiar de plan cuando quieras.",
+      "cita": "según la documentación, sí se puede",
+      "source_id": "src-1",
+      "chunk": 0,
+      "similitud": 0.34
+    },
+    "a-3": {
+      "workspace_id": "globex",
+      "pregunta": "¿Cómo agrego un usuario nuevo?",
+      "respuesta": "Ve a Configuración > Equipo y selecciona Invitar. La invitación caduca a los 7 días.",
+      "cita": "Para agregar un usuario nuevo, ve a Configuración > Equipo y selecciona Invitar.",
+      "source_id": "src-2",
+      "chunk": 7,
+      "similitud": 0.88
+    },
+    "a-4": {
+      "workspace_id": "acme",
+      "pregunta": "¿Cuánto dura la invitación a un usuario?",
+      "respuesta": "La invitación caduca a los 7 días.",
+      "cita": "La invitación caduca a los 7 días.",
+      "source_id": "src-99-inexistente",
+      "chunk": 12,
+      "similitud": 0.79
+    },
+    "a-5": {
+      "workspace_id": "globex",
+      "pregunta": "¿Cuál es el plazo de devolución?",
+      "respuesta": "El plazo es de 15 días naturales.",
+      "cita": "una garantía de devolución de 15 días naturales a partir de la fecha de contratación",
+      "source_id": "src-1",
+      "chunk": null,
+      "similitud": 0.86
+    }
+  }
+}

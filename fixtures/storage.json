@@ -1,0 +1,21 @@
+{
+  "acme": [
+    "Me llegó una factura duplicada este mes",
+    "QUIERO UN REEMBOLSO",
+    "cargo duplicado en mi tarjeta",
+    "La app no funciona desde ayer",
+    "No puedo iniciar sesión, me da error",
+    "Olvidé mi contraseña",
+    "> no funciona",
+    "Hola",
+    "ok",
+    "Necesito agregar un usuario nuevo al equipo"
+  ],
+  "globex": [
+    "El sistema está muy lento",
+    "no carga el dashboard",
+    "la exportación falla siempre",
+    "error 500 al guardar"
+  ],
+  "initech": []
+}
