@@ -12,7 +12,9 @@ Necesitamos una guardia en código.
 
 from __future__ import annotations
 
+import collections
 import logging
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -46,13 +48,58 @@ class LoopGuard:
     """
 
     def __init__(self, max_calls: int = MAX_CALLS):
-        raise NotImplementedError("EJERCICIO 5")
+        self.max_calls = max_calls
+        # Almacenamiento anidado: {session_id: {agent_name: conteo}}
+        self._counts: dict[str, dict[str, int]] = collections.defaultdict(
+            lambda: collections.defaultdict(int)
+        )
+        # ANÁLISIS DE CONCURRENCIA:
+        # En Python con asyncio en un solo hilo de evento (single-threaded event loop),
+        # las operaciones de incremento y lectura en diccionarios en memoria son atómicas
+        # y cooperativas entre yields de await. Sin embargo, dado que en arquitecturas de agentes
+        # los especialistas pueden ejecutarse en hilos separados (ej. asyncio.to_thread o
+        # ThreadPoolExecutor para llamadas bloqueantes de I/O / SDKs de LLM), se incorpora un
+        # threading.Lock() reentrante (RLock). Esto garantiza thread-safety absoluta y previene
+        # race conditions en la verificación e incremento del contador bajo cualquier runtime.
+        self._lock = threading.RLock()
 
     def record(self, session_id: str, agent_name: str) -> int:
-        raise NotImplementedError("EJERCICIO 5")
+        """Registra una llamada para el par (sesión, agente) y devuelve el conteo acumulado.
+
+        Levanta ToolLoopError si el nuevo conteo excede `max_calls`.
+        """
+        with self._lock:
+            current_calls = self._counts[session_id][agent_name] + 1
+            self._counts[session_id][agent_name] = current_calls
+
+            if current_calls > self.max_calls:
+                msg = (
+                    f"ToolLoopError [Alerta Operativa]: El agente '{agent_name}' ha excedido el límite "
+                    f"máximo permitido de llamadas ({self.max_calls}) en la sesión '{session_id}'. "
+                    f"Conteo registrado: {current_calls}. Posible bucle infinito en invocación de herramientas."
+                )
+                logger.error(msg)
+                raise ToolLoopError(msg)
+
+            logger.debug(
+                "Guardia registrada para sesión '%s', agente '%s': %d/%d",
+                session_id,
+                agent_name,
+                current_calls,
+                self.max_calls,
+            )
+            return current_calls
 
     def reset(self, session_id: str) -> None:
-        raise NotImplementedError("EJERCICIO 5")
+        """Limpia los conteos de una sesión para prevenir fugas de memoria."""
+        with self._lock:
+            if session_id in self._counts:
+                del self._counts[session_id]
+                logger.debug("Guardia reseteada para sesión '%s'", session_id)
 
     def snapshot(self, session_id: str) -> dict[str, int]:
-        raise NotImplementedError("EJERCICIO 5")
+        """Devuelve una copia aislada de los conteos actuales para una sesión."""
+        with self._lock:
+            if session_id not in self._counts:
+                return {}
+            return dict(self._counts[session_id])
