@@ -42,6 +42,9 @@ El recuperador léxico actual falla con sinónimos ("restablecer contraseña" vs
 | 6 | 27 | Filtrado tardío (`if data["similitud"] >= min_similitud`) tras consultar la base. | Media | Se consumen llamadas de red y recursos de la base de datos para recuperar títulos de fuentes de registros que terminan descartándose inmediatamente después. |
 | 7 | 30 | Efecto secundario de I/O en disco global rígido (`/tmp/last_answers.json`). | Crítica | En una arquitectura sin estado (stateless/contenedores), el almacenamiento local no es compartido ni persistente. Bajo concurrencia, peticiones paralelas colisionan sobre el mismo archivo generando race conditions y lecturas inconsistentes entre usuarios. |
 
+## Ejercicio 4 - qué movería a código determinista
+Movería a código determinista (Python) la validación de integridad de metadatos y trazabilidad: verificar mediante un set lookup en memoria que `source_id` exista en la tabla `sources`, comprobar que `chunk` sea un entero no nulo, que `similitud >= 0.70`, y que la cadena `cita` sea una subsecuencia exacta (`in` normalizado) dentro del texto original del documento. Un LLM es probabilístico y puede pasar por alto referencias forjadas o fragmentos nulos por atender únicamente a la coherencia semántica. Dejar las reglas booleanas y de existencia en código garantiza 100% de confiabilidad sin latencia, reservando el LLM únicamente para evaluar si la respuesta sintetizada no contradice o tergiverse la cita literal.
+
 ## Captura de Consola (Plan Enterprise)
 ![Captura Enterprise](captura_enterprise.jpeg)
 
