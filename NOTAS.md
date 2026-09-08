@@ -22,13 +22,25 @@
 
 ### Decisiones de las que estoy menos seguro
 1. **Umbrales estáticos fijos de similitud (0.55 y 0.75 en Ejercicio 6):** Los puntajes léxicos basados en IDF y solapamiento varían drásticamente según la longitud de la pregunta del usuario. Una pregunta muy concisa puede generar un puntaje artificialmente bajo a pesar de ser relevante. En producción requeriría umbrales dinámicos calibrados contra un dataset de evaluación o un re-ranker.
-2. (Se completará con Ejercicio 3 o 4)
+2. **Eliminar completamente la escritura en `/tmp` en vez de aislarla por proceso/workspace (Ejercicio 3):** Se decidió suprimir `Path("/tmp/last_answers.json").write_text()` porque en un servicio cloud sin estado genera colisiones de concurrencia y no aporta al contrato de retorno de la función. Si algún componente externo de observabilidad dependía estrictamente de ese archivo, requeriría un dump estructurado mediante logs o un storage temporal por request ID.
 
 ## Ejercicio 1 - reglas vs LLM
 Una ventaja clave de las reglas es el determinismo estricto, la latencia despreciable (<1 ms) y el costo operativo cero sin riesgo de alucinaciones sintácticas. Su desventaja principal es la fragilidad semántica ante variaciones léxicas, faltas ortográficas complejas, ambigüedad contextual o intenciones implícitas no mapeadas. Cambiaría a un clasificador entrenado (como un encoder ligero tipo SetFit o un LLM pequeño destilado) cuando el catálogo de intenciones crezca más allá de 30 categorías o cuando la tasa de mensajes caídos en "desconocido" crezca en producción debido a que los usuarios formulan preguntas de forma conversacional, indirecta o con lenguaje coloquial variado.
 
 ## Ejercicio 6 - cómo mejoraría el recuperador
 El recuperador léxico actual falla con sinónimos ("restablecer contraseña" vs "recuperar acceso") porque indexa y pondera términos exactos mediante stems de 5 caracteres. Para resolverlo, implementaría una arquitectura híbrida: embeddings densos multilingües (como text-embedding-3-small o BAAI/bge-m3) combinados con BM25 mediante Reciprocal Rank Fusion (RRF). El vector captura proximidad semántica e intenciones equivalentes, mientras que BM25 preserva precisión en códigos o nombres de planes. El costo asociado implica latencia extra durante la ingestión (cálculo de embeddings asíncrono), consumo de memoria RAM o costo de base de datos vectorial (ej. pgvector/Qdrant) y costo monetario por token al generar representaciones vectoriales.
+
+## Ejercicio 3 - tabla de defectos
+
+| # | Línea | Qué está mal | Gravedad | Síntoma que produce en producción |
+|---|---|---|---|---|
+| 1 | 14 | Argumento mutable como valor por defecto (`cache={}`). | Crítica | El diccionario persiste durante todo el ciclo de vida del proceso de Python. Si un usuario A consulta un workspace con `min_similitud=0.85`, el resultado filtrado se cachea; cuando un usuario B consulta el mismo workspace pidiendo todas las respuestas (`min_similitud=0.0`), recibe la respuesta incompleta del usuario A. |
+| 2 | 18 | Instanciación directa de cliente (`db = DatabaseClient()`) en lugar del singleton. | Alta | Se crea una nueva conexión/instancia por cada invocación. En producción contra una base de datos real, provoca agotamiento del connection pool (too many connections) y degrada la latencia bajo concurrencia. |
+| 3 | 24 | Consulta síncrona en bucle iterativo (problema $N+1$). | Media-Alta | Para $N$ respuestas se lanzan $N$ llamadas secuenciales independientes a la tabla `sources`, incrementando linealmente la latencia total de la petición de forma innecesaria. |
+| 4 | 23-25 | Falta de validación ante fuentes inexistentes (`source.to_dict()["titulo"]`). | Alta | Si un registro en `answers` apunta a un `source_id` huérfano o eliminado, `source.to_dict()` devuelve `{}` y el acceso a `["titulo"]` lanza `KeyError`, abortando la petición completa con error 500. |
+| 5 | 26 | Asignación de confianza con evaluación booleana estricta sin validar tipado. | Media | Si `similitud` no está presente o es nulo, la comparación lanza `TypeError`. Además, reduce a clasificación binaria sin contemplar umbrales intermedios. |
+| 6 | 27 | Filtrado tardío (`if data["similitud"] >= min_similitud`) tras consultar la base. | Media | Se consumen llamadas de red y recursos de la base de datos para recuperar títulos de fuentes de registros que terminan descartándose inmediatamente después. |
+| 7 | 30 | Efecto secundario de I/O en disco global rígido (`/tmp/last_answers.json`). | Crítica | En una arquitectura sin estado (stateless/contenedores), el almacenamiento local no es compartido ni persistente. Bajo concurrencia, peticiones paralelas colisionan sobre el mismo archivo generando race conditions y lecturas inconsistentes entre usuarios. |
 
 ## Captura de Consola (Plan Enterprise)
 ![Captura Enterprise](captura_enterprise.jpeg)
